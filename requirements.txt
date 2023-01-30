@@ -1,0 +1,9 @@
+fastapi==0.89.1
+immudb-py==1.4.0
+rlog-generator==0.2.0
+uvicorn==0.15.0
+python-multipart==0.0.5
+pydantic[dotenv]
+passlib==1.7.4
+python-jose[cryptography]
+bcrypt==4.0.1

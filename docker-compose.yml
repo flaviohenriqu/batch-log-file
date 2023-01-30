@@ -1,0 +1,40 @@
+# docker-compose.yml
+
+version: '3'
+services:
+  immudb:
+    ports:
+      - '3322:3322'
+      - '8080:8080'
+    container_name: immudb
+    environment:
+      - IMMUDB_ADDRESS=0.0.0.0
+      - IMMUDB_AUTH=true
+    image: 'codenotary/immudb:latest'
+
+  api:
+    build: .
+    command: uvicorn main:app --reload --workers 1 --host 0.0.0.0 --port 5000
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 5000:5000
+    environment:
+      - IMMUDB_HOST=immudb
+      - IMMUDB_PORT=3322
+      - IMMUDB_USER=immudb
+      - IMMUDB_PASSWORD=immudb
+      - JWT_SECRET_KEY=secret
+      - JWT_REFRESH_SECRET_KEY=refresh_secret
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  grafana-data:
