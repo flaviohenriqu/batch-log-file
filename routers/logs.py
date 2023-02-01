@@ -1,9 +1,10 @@
 from immudb import ImmudbClient
 
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, UploadFile
 
 from deps import get_immudb_client, reuseable_oauth
 from settings import get_settings, Settings
+from tasks.logs import process_large_logs
 from utils import chunked
 
 router = APIRouter()
@@ -26,6 +27,17 @@ async def load_logs(
         assert type(response) != int
 
     return {"data": data, "total": len(data)}
+
+
+@router.post("/logs/large", summary="Batch large log file", dependencies=[Depends(reuseable_oauth)])
+async def large_logs(
+    file: UploadFile,
+    background_tasks: BackgroundTasks,
+    database: ImmudbClient = Depends(get_immudb_client),
+    settings: Settings = Depends(get_settings),
+):
+    background_tasks.add_task(process_large_logs, file, database, settings.chunk_size)
+    return {"message": f"starting processing file: {file.filename}"}
 
 
 @router.get("/logs", summary="List logs", dependencies=[Depends(reuseable_oauth)])
